@@ -3,13 +3,13 @@
   "displayName": "Flutter Tools - MX",
   "description": "flutter tools",
   "publisher": "MXCode",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.65.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/HiUSB/dart-data-class-tools"
+    "url": "https://github.com/HiUSB/flutter-tools"
   },
   "icon": "assets/logo.png",
   "categories": [
