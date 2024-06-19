@@ -3,7 +3,7 @@
   "displayName": "Flutter Tools - MX",
   "description": "flutter tools",
   "publisher": "MXCode",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.65.0"
   },
@@ -28,12 +28,39 @@
       {
         "command": "flutter-tools.assets-generate",
         "title": "Flutter Tools: Generate x1 x2 images and r.dart"
+      },
+      {
+        "command": "flutter-tools.create-directory",
+        "title": "Flutter Tools: Create Common Directory"
+      },
+      {
+        "command": "flutter-tools.routers-generate",
+        "title": "Flutter Tools: Routers Generate"
+      },
+      {
+        "command": "flutter-tools.new-page",
+        "title": "Flutter Tools: New Page"
       }
     ],
     "menus": {
       "explorer/context": [
         {
           "command": "flutter-tools.assets-generate",
+          "group": "flutter_tools@1",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "flutter-tools.create-directory",
+          "group": "flutter_tools@1",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "flutter-tools.routers-generate",
+          "group": "flutter_tools@1",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "flutter-tools.new-page",
           "group": "flutter_tools@1",
           "when": "explorerResourceIsFolder"
         }
@@ -52,6 +79,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/change-case": "^2.3.1",
     "@types/vscode": "^1.65.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
@@ -63,10 +91,13 @@
     "ts-loader": "^9.5.1",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.1.4",
+    "@types/mkdirp": "^0.5.2",
     "@vscode/test-cli": "^0.0.6",
     "@vscode/test-electron": "^2.3.9"
   },
   "dependencies": {
+    "change-case": "^3.1.0",
+    "mkdirp": "^0.5.2",
     "jimp": "^0.16.1",
     "lodash": "^4.17.19"
   }
