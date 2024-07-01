@@ -28,9 +28,6 @@ const appendFileAsync = promisify(fs.appendFile);
 
 var rootPath = "";
 
-let isFirst = true;
-
-
 export const imageGenerate = async (uri: Uri) => {
   if (vscode.workspace.workspaceFolders) {
     rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -78,7 +75,6 @@ async function imagesGen(targetDirectory: string): Promise<void> {
 
       if (isFirstIteration) {
         isFirstIteration = false;
-        isFirst = false;
         // const filesTxtPath = path.join(workDir, "files.txt");
         // if (await existsAsync(filesTxtPath)) {
         //   await unlinkAsync(filesTxtPath);
