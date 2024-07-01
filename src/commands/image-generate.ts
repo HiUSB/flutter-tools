@@ -28,6 +28,9 @@ const appendFileAsync = promisify(fs.appendFile);
 
 var rootPath = "";
 
+let isFirst = true;
+
+
 export const imageGenerate = async (uri: Uri) => {
   if (vscode.workspace.workspaceFolders) {
     rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -40,7 +43,6 @@ export const imageGenerate = async (uri: Uri) => {
 
   try {
     await imagesGen(targetDirectory);
-    svgsGen(targetDirectory);
     dartGen(targetDirectory);
     window.showInformationMessage(`Successfully Generated Images Directory`);
   } catch (error) {
@@ -74,13 +76,13 @@ async function imagesGen(targetDirectory: string): Promise<void> {
       const workDir = path.resolve(targetDirectory, imgPath.dir, "..");
       console.log(file.name, workDir);
 
-      // 创建 2.0x 目录
       if (isFirstIteration) {
         isFirstIteration = false;
-        const filesTxtPath = path.join(workDir, "files.txt");
-        if (await existsAsync(filesTxtPath)) {
-          await unlinkAsync(filesTxtPath);
-        }
+        isFirst = false;
+        // const filesTxtPath = path.join(workDir, "files.txt");
+        // if (await existsAsync(filesTxtPath)) {
+        //   await unlinkAsync(filesTxtPath);
+        // }
       }
 
       // 缩放图片并写入文件列表
@@ -105,67 +107,17 @@ async function imagesGen(targetDirectory: string): Promise<void> {
       }
 
       // 加入记录
-      const imgRelativePath = getRelativePath(imgPath1x, rootPath);
-      const basename = path.basename(file.name, path.extname(file.name));
-      await appendFileAsync(
-        path.join(workDir, "files.txt"),
-        `static const ${basename} = '${imgRelativePath}';\r\n`,
-        { encoding: "utf8" }
-      );
+      // const imgRelativePath = getRelativePath(imgPath1x, rootPath);
+      // const basename = path.basename(file.name, path.extname(file.name));
+      // await appendFileAsync(
+      //   path.join(workDir, "files.txt"),
+      //   `static const ${basename} = '${imgRelativePath}';\r\n`,
+      //   { encoding: "utf8" }
+      // );
     }
   }
 }
 
-function svgsGen(targetDirectory: string): void {
-  let isFirst = true;
-
-  try {
-    // Ensure targetDirectory exists before reading it
-    if (!existsSync(targetDirectory)) {
-      throw new Error(`Directory '${targetDirectory}' does not exist.`);
-    }
-
-    const fileNames = readdirSync(targetDirectory);
-
-    for (const fileName of fileNames) {
-      const filePath = path.join(targetDirectory, fileName);
-      const stats = statSync(filePath);
-
-      if (stats.isDirectory()) {
-        svgsGen(filePath);
-      } else if (stats.isFile()) {
-        const imgPath = path.parse(filePath);
-        const lowExt = imgPath.ext.toLowerCase();
-        if (lowExt !== ".svg") {
-          continue;
-        }
-
-        const workDir = targetDirectory;
-        const filesTxtPath = path.join(workDir, "files.txt");
-
-        // Delete files.txt if it exists and isFirst is true
-        if (isFirst) {
-          isFirst = false;
-          if (existsSync(filesTxtPath)) {
-            rmSync(filesTxtPath);
-          }
-        }
-
-        // Write to files.txt
-        const svgName = imgPath.base;
-        // const svgPath = path.join("assets/svgs", imgPath.base);
-        const svgRelPath = getRelativePath(filePath, rootPath);
-        appendFileSync(
-          filesTxtPath,
-          `static const ${svgName} = '${svgRelPath}';\n`,
-          "utf8"
-        );
-      }
-    }
-  } catch (error: any) {
-    console.error(`Error in svgsGen: ${error.message}`);
-  }
-}
 
 async function dartGen(targetDirectory: string) {
   const workDir = findFirstMatchingDir(targetDirectory, '3.0x');
@@ -174,19 +126,6 @@ async function dartGen(targetDirectory: string) {
     vscode.window.showErrorMessage(`3.0x does not exist`);
     return;
   }
-
-  const filesTxtPath = path.join(workDir, "files.txt");
-  if (!(await existsAsync(filesTxtPath))) {
-    console.log(`files.txt does not exist in ${workDir}`);
-    return;
-  }
-
-  const fileStream = fs.createReadStream(filesTxtPath);
-
-  const rl = readline.createInterface({
-    input: fileStream,
-    crlfDelay: Infinity
-  });
 
   const dartPath = path.join(rootPath, "lib/src/r.dart");
 
@@ -199,17 +138,25 @@ async function dartGen(targetDirectory: string) {
     console.log(`File ${dartPath} does not exist. The directory ${dir} has been created.`);
   }
 
-  const writeStream = fs.createWriteStream(dartPath);
+  const writeStream = fs.createWriteStream(dartPath, { encoding: 'utf8' });
 
   writeStream.write('abstract class R {\n');
-  for await (const line of rl) {
-    writeStream.write('\t' + line + '\n');
-  }
+  fs.readdirSync(workDir, { withFileTypes: true })
+    .forEach((file: { isFile: () => any; name: any; }) => {
+      if (file.isFile()) {
+        const ext = path.extname(file.name).toLowerCase();
+        if ([".jpeg", ".jpg", ".png", ".gif", ".webp", ".svg"].includes(ext)) {
+          console.log(file.name);
+          const imgPath = path.join(workDir, file.name);
+          const imgRelativePath = getRelativePath(imgPath, rootPath);
+          const basename = path.basename(file.name, path.extname(file.name));
+          const text = `\tstatic const ${basename} = '${imgRelativePath}';\n`;
+          writeStream.write(text);
+        }
+      }
+    });
   writeStream.write('}');
   writeStream.end();
-
-  fs.unlinkSync(filesTxtPath);
-  console.log(`files.txt has been deleted.`);
 }
 
 function findFirstMatchingDir(dir: string, match: string): string | undefined {
